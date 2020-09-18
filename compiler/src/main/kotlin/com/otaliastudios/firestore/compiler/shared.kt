@@ -7,7 +7,7 @@ package com.otaliastudios.firestore
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class FirestoreClass
+annotation class FirestoreClass(val addCreatedAt: Boolean = true, val addUpdatedAt: Boolean = true)
 
 @Suppress("unused")
 interface FirestoreMetadata {

@@ -13,5 +13,5 @@ import androidx.annotation.Keep
 @Keep
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-public annotation class FirestoreClass
+public annotation class FirestoreClass(val addCreatedAt: Boolean = true, val addUpdatedAt: Boolean = true)
 // Keep in sync with compiler!
