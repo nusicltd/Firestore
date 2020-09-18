@@ -37,12 +37,16 @@ class Processor : AbstractProcessor() {
     override fun process(set: Set<TypeElement>, environment: RoundEnvironment): Boolean {
         collect(environment).forEach {
             val properties = inspect(it)
-            write(it, properties)
+            write(it.typeElement, properties)
         }
         return true
     }
 
-    private fun collect(environment: RoundEnvironment): List<TypeElement> {
+    data class FirestoreClassElement(
+            val typeElement: TypeElement,
+            val annotation: FirestoreClass)
+
+    private fun collect(environment: RoundEnvironment): List<FirestoreClassElement> {
         return environment
                 .getElementsAnnotatedWith(FirestoreClass::class.java)
                 .mapNotNull {
@@ -50,20 +54,28 @@ class Processor : AbstractProcessor() {
                         logError("FirestoreClass should only annotate classes.", it)
                         null
                     } else {
-                        it as TypeElement
+                        val firestoreClass = it.getAnnotation(FirestoreClass::class.java)
+                        FirestoreClassElement(it as TypeElement, firestoreClass)
                     }
                 }
     }
 
-    private fun inspect(element: TypeElement): List<Property> {
+    private fun inspect(classElement: FirestoreClassElement): List<Property> {
+        val element = classElement.typeElement
         logInfo("Inspecting ${element.simpleName}")
 
         // Init properties. If document, add extra timestamps.
         val properties = mutableListOf<Property>()
         if (element.isFirestoreDocument) {
-            logInfo("It's a document! Adding timestamp fields.")
-            properties.add(Property("createdAt", TIMESTAMP, isNullable = true))
-            properties.add(Property("updatedAt", TIMESTAMP, isNullable = true))
+            if (classElement.annotation.addCreatedAt || classElement.annotation.addUpdatedAt) {
+                logInfo("It's a document! Adding timestamp fields.")
+                if (classElement.annotation.addCreatedAt) {
+                    properties.add(Property("createdAt", TIMESTAMP, isNullable = true))
+                }
+                if (classElement.annotation.addUpdatedAt) {
+                    properties.add(Property("updatedAt", TIMESTAMP, isNullable = true))
+                }
+            }
         }
 
         // Inspect properties.
@@ -236,6 +248,6 @@ class Processor : AbstractProcessor() {
     }
 
     private fun logInfo(message: String) {
-        processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, message + "\n ")
+        processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, "$message\r\n  ")
     }
 }
