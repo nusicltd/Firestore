@@ -72,10 +72,9 @@ class Processor : AbstractProcessor() {
             // The properties we want to support are those delegated with by this(),
             // the rest is probably class state that should not be in firestore.
             it.delegated
-            true
         }.filter {
             logInfo("INSPECTING! Property:${it.name} Initializer:${it.initializer} Getter:${it.getter} ReceiverType:${it.receiverType}")
-            false
+            true
         }.forEach { property ->
             logInfo("Inspecting property ${property.name} of type ${property.type}.")
             val annotationsSpecs = property.annotations + (property.getter?.annotations ?: listOf())
