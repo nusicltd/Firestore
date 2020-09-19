@@ -46,6 +46,7 @@ android {
 
 dependencies {
     api("com.google.firebase:firebase-firestore-ktx:21.6.0")
+    implementation(kotlin("reflect", "1.4.0"))
 }
 
 publisher {

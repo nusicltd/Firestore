@@ -25,6 +25,18 @@ public abstract class FirestoreDocument(
         source: Map<String, Any?>? = null
 ) : FirestoreMap<Any?>(source = source) {
 
+    private var addCreatedAt = true
+    private var addUpdatedAt = true
+
+    init {
+        val firestoreClass = this::class.annotations.find { annotation ->
+            annotation.annotationClass.simpleName == "FirestoreClass" } as? FirestoreClass
+        if (firestoreClass != null) {
+            addCreatedAt = firestoreClass.addCreatedAt
+            addUpdatedAt = firestoreClass.addUpdatedAt
+        }
+    }
+
     @Suppress("MemberVisibilityCanBePrivate", "RedundantModalityModifier")
     @Exclude
     public final fun isNew(): Boolean {
@@ -94,7 +106,9 @@ public abstract class FirestoreDocument(
         if (isNew()) throw IllegalStateException("Can not update a new object. Please call create().")
         val map = mutableMapOf<String, Any?>()
         flattenValues(map, prefix = "", dirtyOnly = true)
-        map["updatedAt"] = FieldValue.serverTimestamp()
+        if (addUpdatedAt) {
+            map["updatedAt"] = FieldValue.serverTimestamp()
+        }
         return getReference().update(map).onSuccessTask {
             updatedAt = Timestamp.now()
             clearDirt()
@@ -110,8 +124,12 @@ public abstract class FirestoreDocument(
         // Same for FirestoreMap and FirestoreList. Each one need to return a Firestore-readable Map or List or whatever else.
         // Can't use the [flatten] API or this won't work with . fields.
         val map = collectValues(dirtyOnly = false).toMutableMap()
-        map["createdAt"] = FieldValue.serverTimestamp()
-        map["updatedAt"] = FieldValue.serverTimestamp()
+        if (addCreatedAt) {
+            map["createdAt"] = FieldValue.serverTimestamp()
+        }
+        if (addUpdatedAt) {
+            map["updatedAt"] = FieldValue.serverTimestamp()
+        }
         // Add to cache NOW, then eventually revert.
         // This is because when reference.set() succeeds, any query listener is notified
         // before our onSuccessTask() is called. So a new item is created.
@@ -132,7 +150,9 @@ public abstract class FirestoreDocument(
         if (isNew()) throw IllegalStateException("Can not update a new object. Please call create().")
         val map = mutableMapOf<String, Any?>()
         flattenValues(map, prefix = "", dirtyOnly = true)
-        map["updatedAt"] = FieldValue.serverTimestamp()
+        if (addUpdatedAt) {
+            map["updatedAt"] = FieldValue.serverTimestamp()
+        }
         batch.update(getReference(), map)
         return object: FirestoreBatchOp {
             override fun notifyFailure() {}
@@ -147,8 +167,12 @@ public abstract class FirestoreDocument(
         if (!isNew()) throw IllegalStateException("Can not create an existing object.")
         val reference = requireReference()
         val map = collectValues(dirtyOnly = false).toMutableMap()
-        map["createdAt"] = FieldValue.serverTimestamp()
-        map["updatedAt"] = FieldValue.serverTimestamp()
+        if (addCreatedAt) {
+            map["createdAt"] = FieldValue.serverTimestamp()
+        }
+        if (addUpdatedAt) {
+            map["updatedAt"] = FieldValue.serverTimestamp()
+        }
         batch.set(reference, map)
         FirestoreCache[reference.id] = this
         return object: FirestoreBatchOp {
@@ -171,8 +195,10 @@ public abstract class FirestoreDocument(
         if (isNew()) throw IllegalStateException("Can not trySave a new object. Please call save() first.")
         val reference = requireReference()
         val values = updates.toMap().toMutableMap()
-        values["updatedAt"] = FieldValue.serverTimestamp()
-        if (isNew()) values["createdAt"] = FieldValue.serverTimestamp()
+        if (addUpdatedAt) {
+            values["updatedAt"] = FieldValue.serverTimestamp()
+        }
+        if (isNew() && addCreatedAt) values["createdAt"] = FieldValue.serverTimestamp()
         return reference.update(values).continueWith {
             if (it.exception != null) {
                 throw it.exception!!
@@ -184,8 +210,12 @@ public abstract class FirestoreDocument(
                 }
                 updatedAt = Timestamp.now()
                 createdAt = createdAt ?: updatedAt
-                clearDirt("updatedAt")
-                clearDirt("createdAt")
+                if (addUpdatedAt) {
+                    clearDirt("updatedAt")
+                }
+                if (addCreatedAt) {
+                    clearDirt("createdAt")
+                }
                 @Suppress("UNCHECKED_CAST")
                 this@FirestoreDocument as T
             }
