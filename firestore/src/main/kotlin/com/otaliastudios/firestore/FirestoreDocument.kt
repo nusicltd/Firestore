@@ -58,10 +58,10 @@ public abstract class FirestoreDocument(
     }
 
     @get:Keep @set:Keep
-    public var createdAt: Timestamp? by this
+    public var createdAt: Timestamp? by this()
 
     @get:Keep @set:Keep
-    public var updatedAt: Timestamp? by this
+    public var updatedAt: Timestamp? by this()
 
     internal var cacheState: FirestoreCacheState = FirestoreCacheState.FRESH
 
