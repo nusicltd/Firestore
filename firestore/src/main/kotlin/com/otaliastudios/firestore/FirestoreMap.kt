@@ -105,7 +105,8 @@ public open class FirestoreMap<T>(source: Map<String, T>? = null) : BaseObservab
     protected open fun <K> onCreateFirestoreMap(key: String): FirestoreMap<K> {
         val metadata = this::class.metadata
         var candidate = metadata?.create<FirestoreMap<K>>(key)
-        candidate = candidate ?: metadata?.createInnerType()
+        // FIXME: This line is causing crashed when a map is removed from a FirestoreDocument subtype
+        //candidate = candidate ?: metadata?.createInnerType()
         candidate = candidate ?: FirestoreMap()
         return candidate
     }
@@ -113,7 +114,8 @@ public open class FirestoreMap<T>(source: Map<String, T>? = null) : BaseObservab
     protected open fun <K: Any> onCreateFirestoreList(key: String): FirestoreList<K> {
         val metadata = this::class.metadata
         var candidate = metadata?.create<FirestoreList<K>>(key)
-        candidate = candidate ?: metadata?.createInnerType()
+        // FIXME: This line is causing crashed when a map is removed from a FirestoreDocument subtype
+        //candidate = candidate ?: metadata?.createInnerType()
         candidate = candidate ?: FirestoreList()
         return candidate
     }
