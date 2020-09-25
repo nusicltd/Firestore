@@ -19,7 +19,7 @@ internal class FirestoreFieldDelegate<MapType, ValueType : MapType>(private val 
         @Suppress("UNCHECKED_CAST")
         var what = thisRef[property.field] as ValueType
         if (what == null) {
-            val metadata = this::class.metadata
+            val metadata = thisRef::class.metadata
             if (metadata != null && !metadata.isNullable(property.field)) {
                 what = metadata.create<ValueType>(property.field)!!
                 thisRef[property.field] = what
